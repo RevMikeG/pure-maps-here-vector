@@ -1,0 +1,13 @@
+{
+  "attribution": {
+    "© HERE": "https://legal.here.com"
+  },
+  "format": "mapbox-gl",
+  "keys": ["HERE_APIKEY"],
+  "light": "day",
+  "name": "HERE Vector Day (experimental)",
+  "profiles": ["mixed", "online", "HERE"],
+  "provider": "HERE Vector",
+  "style_url": "https://assets.vector.hereapi.com/styles/berlin/base/mapbox/tilezen?apikey=#HERE_APIKEY#",
+  "type": "default"
+}
