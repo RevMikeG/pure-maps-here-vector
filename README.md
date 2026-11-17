@@ -15,7 +15,7 @@ This was tested with **Pure Maps 3.5.1** on a **Jolla Phone 2026**. It is a comm
 
 - Pure Maps with vector-map support (tested with version 3.5.1 on Sailfish OS).
 - Internet connection to fetch HERE vector-map resources.
-- A **valid HERE API key** configured in Pure Maps under `HERE_APIKEY` with access to the vector-style service. Do **not** put your actual key in the JSON file or commit it to GitHub.
+- A **valid HERE API key** configured in Pure Maps under `HERE_APIKEY` with access to the vector-style service.
 - Appropriate HERE service entitlement and compliance with HERE's usage terms.
 
 ## Installation on Sailfish OS
@@ -54,7 +54,7 @@ The map display and routing provider are separate concerns. To use HERE's existi
 3. In the route-planning options, enable **Traffic** if offered.
 4. In navigation settings, enable the traffic-update option if offered, so traffic can be refreshed while navigating.
 
-The vector map does **not** supply traffic data on its own. Whether a route actually accounts for live congestion depends on HERE routing configuration, network access, service permissions, and the Pure Maps version. Test routing and rerouting before relying on it for a journey.
+The vector map does **not** supply traffic data on its own. 
 
 ## Troubleshooting
 
