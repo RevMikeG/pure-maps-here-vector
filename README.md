@@ -35,7 +35,7 @@ Adds HERE vector maps with upright labels, colourful day/night rendering, option
 5. In the **Layers** menu, select **Traffic** to display traffic colours or **Default** to hide them. Day/night continues to work independently.
 6. To keep routes congestion-aware, enable **Traffic** in HERE route options and configure traffic updates during navigation, where available. The visual overlay toggle does not disable traffic-aware route calculations.
 
-The public installer creates **eight private map definitions** (two HERE Vector Colour, four HERE Vector Traffic [two overlay-on, two overlay-off], and two HERE Vector Queues). The installer does not replace existing files or expose your API key in terminal output. Generated files contain authenticated HERE URLs; **never upload them to GitHub**.
+The public installer creates **eight private map definitions** (two HERE Vector Colour, four HERE Vector Traffic [two overlay-on, two overlay-off], and two HERE Vector Queues).
 
 ### Optional: navigation display patch
 
@@ -65,13 +65,9 @@ exit
 
 If you used older experimental navigation patches, their old backups remain separate. **Do not blindly restore an older backup over a newer patch.** Application package upgrades may overwrite QML changes. The patch refuses unfamiliar source layouts instead of forcing an edit.
 
-## If you've already installed the tested experimental setup
-
-**Do not run installers again simply to upgrade the version number.** Your working night road widths, 11-unit route, improved position marker, automatic day/night changes and Layers traffic toggle are already the v1.2 behaviour. The public scripts are for reproducing that setup on another Sailfish device.
-
 ## Privacy and licence
 
-Generated local map definitions can contain your HERE API key inside authenticated tile, sprite and glyph URLs. Publish only the safe template and scripts in this repository; **never publish generated `here_v12_*.json` files**, your `~/.config/io.github.rinigus/PureMaps` settings or your phone's map-definition files. Comply with HERE terms and attribution requirements.
+Generated local map definitions can contain your HERE API key inside authenticated tile, sprite and glyph URLs. 
 
 ## Troubleshooting
 
