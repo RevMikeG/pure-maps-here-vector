@@ -1,118 +1,88 @@
 # HERE Vector Maps for Pure Maps on Sailfish OS
 
-An experimental custom map definition that adds **HERE Vector** to [Pure Maps](https://github.com/rinigus/pure-maps) on Sailfish OS. It uses HERE's MapLibre-compatible vector style rather than raster tiles, so map labels can stay readable when the map rotates during navigation.
+**v1.2** · Unofficial community customisation for [Pure Maps](https://github.com/rinigus/pure-maps), developed and tested on a Jolla Phone running **Pure Maps 3.5.1**.
 
-This was tested with **Pure Maps 3.5.1** on a **Jolla Phone 2026**. It is a community configuration, **not an official HERE or Pure Maps release**.
+Adds HERE vector maps with upright labels, colourful day/night rendering, optional traffic-flow overlays and improved navigation visibility. **HERE congestion-aware routing still comes from the HERE routing profile**, not from the map overlay.
 
-## What it does
+## What's new in v1.2
 
-- Adds **HERE Vector** as a selectable map provider.
-- Uses HERE's hosted vector style via the existing Pure Maps Mapbox GL-compatible renderer.
-- Can be selected with the **HERE** profile so that the existing HERE routing integration remains available.
-- Does **not** itself implement traffic routing, traffic overlays, or automatic rerouting. Those are functions of the selected routing provider and navigation settings.
+* **Layers → Type → Traffic / Default** toggles coloured traffic display on/off within the same provider, for **both day and night**.
+* **Night road-width improvement:** motorways 42% narrower; motorway links and trunk roads 30% narrower, to keep the navigation line visible.
+* **More distinctive night palette:** muted grey A-roads and clear blue motorways.
+* **11-unit magenta navigation route** (instead of the old 7-unit width), with a stronger blue-and-white GPS position marker above the line.
+* **Day/night switch** still works automatically at sunrise and sunset or manually from Layers.
+* Safeguards around user API keys and existing installations.
 
 ## Requirements
 
-- Pure Maps with vector-map support (tested with version 3.5.1 on Sailfish OS).
-- Internet connection to fetch HERE vector-map resources.
-- A **valid HERE API key** configured in Pure Maps under `HERE_APIKEY` with access to the vector-style service.
-- Appropriate HERE service entitlement and compliance with HERE's usage terms.
+* Jolla / Sailfish OS, Pure Maps with Mapbox GL vector rendering (tested on version 3.5.1).
+* A valid HERE API key already available in Pure Maps, with relevant HERE vector/traffic service access and accepted HERE terms.
+* Internet access for downloading vector tiles and real-time traffic.
+* Developer Mode / `devel-su` **only** for the optional navigation QML patch.
 
-## Installation on Sailfish OS
+## For a new installation
 
-1. Download [`here_vector_day.json`](here_vector_day.json).
-2. Open Terminal on your Jolla and create the Sailfish-specific map directory:
+1. Download `install.py` onto your Sailfish phone.
+2. In Terminal run:
 
-   ```sh
-   mkdir -p ~/.local/share/io.github.rinigus/PureMaps/maps
+```sh
+   python3 \~/android\_storage/Download/install.py
    ```
 
-3. Copy the downloaded definition into that directory (adjust the source path if the download went elsewhere):
+   Adjust the path if the browser saved elsewhere; `find \~/android\_storage \~/Downloads -name install.py` may help.
 
-   ```sh
-   cp ~/Downloads/here_vector_day.json ~/.local/share/io.github.rinigus/PureMaps/maps/
-   ```
+3. Fully close and reopen Pure Maps, select the **HERE** profile, then choose **HERE Vector Traffic** from Settings → Maps.
+4. Under **Preferences → Maps**, turn **Switch map modes** **off** for predictable manual traffic display selection, and choose **Day/night mode → Sunrise and sunset**.
+5. In the **Layers** menu, select **Traffic** to display traffic colours or **Default** to hide them. Day/night continues to work independently.
+6. To keep routes congestion-aware, enable **Traffic** in HERE route options and configure traffic updates during navigation, where available. The visual overlay toggle does not disable traffic-aware route calculations.
 
-   Alternatively, transfer the file using SSH or a file manager. Verify it is in place:
+### Optional: navigation display patch
 
-   ```sh
-   ls -l ~/.local/share/io.github.rinigus/PureMaps/maps/here_vector_day.json
-   ```
+The map-style installer works without root. The **optional** `navigation\_patch.py` changes installed QML to draw an **11-unit magenta navigation route**, a slimmer casing and a **white/blue GPS marker above it**. It changes `/usr/share/harbour-pure-maps/qml/Map.qml` and `PositionMarker.qml` and backs up both before changes.
 
-4. Make sure `HERE_APIKEY` is set up in Pure Maps. The definition contains the placeholder `#HERE_APIKEY#`, which Pure Maps replaces with its configured key.
-5. **Fully close Pure Maps**, including its home-screen application card, then launch it again.
-6. Open **Settings / Preferences → Maps** and select **HERE Vector**. (The exact menu wording may differ by version.)
+Completely close Pure Maps, then:
 
-> **Important:** The Sailfish-specific path above is not the generic Linux path `~/.local/share/pure-maps/maps/` and not the old `~/.local/share/harbour-pure-maps/maps/`. The Sailfish application sets `PUREMAPS_HOME_DATA` to `io.github.rinigus/PureMaps` at startup.
+```sh
+devel-su
+python3 /home/defaultuser/android\_storage/Download/navigation\_patch.py install
+exit
+```
 
-## Using HERE congestion-aware routing
+Check without modifying files:
 
-The map display and routing provider are separate concerns. To use HERE's existing traffic-aware route calculations:
+```sh
+python3 \~/android\_storage/Download/navigation\_patch.py status
+```
 
-1. Switch the Pure Maps **profile** to **HERE**.
-2. Select **HERE Vector** under the map provider options, if necessary.
-3. In the route-planning options, enable **Traffic** if offered.
-4. In navigation settings, enable the traffic-update option if offered, so traffic can be refreshed while navigating.
+To restore **only if this v1.2 script created the backup**:
 
-The vector map does **not** supply traffic data on its own. 
+```sh
+devel-su
+python3 /home/defaultuser/android\_storage/Download/navigation\_patch.py restore
+exit
+```
+
+If you used older experimental navigation patches, their old backups remain separate. **Do not blindly restore an older backup over a newer patch.** Application package upgrades may overwrite QML changes. The patch refuses unfamiliar source layouts instead of forcing an edit.
+
+## Privacy and licence
+
+Generated local map definitions can contain your HERE API key inside authenticated tile, sprite and glyph URLs.
 
 ## Troubleshooting
 
-**HERE Vector does not appear in the Maps list**
+* **Map missing:** check `\~/.local/share/io.github.rinigus/PureMaps/maps/` and restart Pure Maps completely.
+* **401 authentication error:** check the HERE key, licence acceptance, and service entitlement in Pure Maps.
+* **Traffic switch doesn't respond:** ensure `HERE Vector Traffic` is the selected map provider, disable *Switch map modes*, and use **Layers → Type → Traffic / Default**.
+* **Dark/bright styles don't switch:** choose **Day/night mode → Sunrise and sunset** and allow GPS, or set Manual and use sun/moon.
+* **Navigation patch rejected:** the QML structure may differ, or earlier patches/backups may be present. Do not force it. Report the exact error.
+* **After an upgrade:** verify whether Pure Maps package updates restored the original QML files.
 
-- Check that the file is in `~/.local/share/io.github.rinigus/PureMaps/maps/`, not only one of the generic directories.
-- Validate the JSON:
+## History
 
-  ```sh
-  python3 -m json.tool ~/.local/share/io.github.rinigus/PureMaps/maps/here_vector_day.json >/dev/null && echo 'JSON valid'
-  ```
+* `v0.1-alpha` Basic HERE vector style.
+* `v1.0` Day/night styling and live traffic overlays.
+* `v1.1` Navigation visibility and GPS layer ordering.
+* `v1.2` Traffic display toggle, 11-unit route and night road visibility refinements.
 
-- Fully close Pure Maps and reopen it.
-- Confirm the definition has `"profiles": ["mixed", "online", "HERE"]` and `"provider": "HERE Vector"`.
+See [CHANGELOG.md](CHANGELOG.md). This project is unofficial, independent of HERE and Pure Maps. Test navigation while stationary; never adjust phone settings while driving.
 
-**“loading style failed: HTTP status code 401”**
-
-- The HERE vector service has rejected authentication. Confirm that Pure Maps has a valid HERE API key and that the key has access to the relevant HERE service.
-- Do not remove `"keys": ["HERE_APIKEY"]` as a permanent workaround. Without it, Pure Maps does not replace `#HERE_APIKEY#` in the URL, which can lead to an HTTP 401 error.
-- Close and reopen Pure Maps after updating the key.
-
-**Vector map displays but congestion is not taken into account**
-
-- Verify that the **HERE profile**, not merely the HERE Vector map, is selected.
-- Check that HERE traffic routing is enabled for the route and available under your HERE access arrangement.
-
-**Map loads but labels or route lines behave strangely**
-
-- HERE's hosted style or Pure Maps' renderer may change. This configuration is experimental, and may need future adjustments such as label/route-layer settings.
-
-## Configuration
-
-The included JSON uses the following HERE-hosted style URL:
-
-```text
-https://assets.vector.hereapi.com/styles/berlin/base/mapbox/tilezen?apikey=#HERE_APIKEY#
-```
-
-The `#HERE_APIKEY#` token is an application-side placeholder, not a usable API key. Leave it unchanged in a public repository.
-
-## Removal
-
-Select another map provider first, then remove the definition and restart Pure Maps:
-
-```sh
-rm ~/.local/share/io.github.rinigus/PureMaps/maps/here_vector_day.json
-```
-
-This does not remove Pure Maps, change its built-in HERE maps, or alter your routing settings.
-
-## References
-
-- [Pure Maps source](https://github.com/rinigus/pure-maps)
-- [Pure Maps custom map-definition documentation](https://github.com/rinigus/pure-maps/blob/master/maps/README.md)
-- [Sailfish startup data-directory configuration](https://github.com/rinigus/pure-maps/blob/master/src/main.cpp)
-- [Sailfish data-directory prefix](https://github.com/rinigus/pure-maps/blob/master/src/config.h)
-- [HERE legal information](https://legal.here.com/)
-
-## Disclaimer
-
-Unofficial community configuration, tested on one device and installation. HERE and Pure Maps are trademarks or projects of their respective owners. Check service terms, entitlement, and any applicable attribution requirements before redistributing or using this configuration.
