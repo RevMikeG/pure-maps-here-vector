@@ -33,10 +33,10 @@ Adds HERE vector maps with upright labels, colourful day/night rendering, option
 2. In Terminal run:
 
 ```sh
-   python3 \~/Downloads/install.py
+   python3 ~/Downloads/install.py
    ```
 
-   If the browser saved it elsewhere, move the file to `\~/Downloads/` or adjust the command to match its location.
+   If the browser saved it elsewhere, move the file to `~/Downloads/` or adjust the command to match its location.
 
 3. Fully close and reopen Pure Maps, select the **HERE** profile, then choose **HERE Vector Traffic** from Settings → Maps.
 4. Under **Preferences → Maps**, turn **Switch map modes** **off** for predictable manual traffic display selection, and choose **Day/night mode → Sunrise and sunset**.
@@ -60,7 +60,7 @@ exit
 Check without modifying files:
 
 ```sh
-python3 \~/Downloads/navigation\_patch.py status
+python3 ~/Downloads/navigation\_patch.py status
 ```
 
 To restore **only if this v1.2 script created the backup**:
@@ -78,7 +78,7 @@ If you used older experimental navigation patches, their old backups remain sepa
 Existing installations can still show the additional **HERE Vector Colour** and **HERE Vector Queues** entries in **Settings → Maps**. To retain only **HERE Vector Traffic** (and keep its Day/Night and Default/Traffic choices in Layers), download `tidy\_here\_maps.py` and fully close Pure Maps before running:
 
 ```sh
-python3 \~/Downloads/tidy\_here\_maps.py
+python3 ~/Downloads/tidy\_here\_maps.py
 ```
 
 This tool checks the four required day/night and traffic-on/off variants exist before moving extra custom HERE Vector definitions to a private backup folder. It does not touch built-in HERE maps or app QML. Run it as the regular Sailfish user, **not** with `devel-su`.
@@ -86,7 +86,7 @@ This tool checks the four required day/night and traffic-on/off variants exist b
 To undo the cleanup, close Pure Maps and run:
 
 ```sh
-python3 \~/Downloads/tidy\_here\_maps.py --restore
+python3 ~/Downloads/tidy\_here\_maps.py --restore
 ```
 
 **If your setup already has just one HERE Vector Traffic provider, you do not need to run the installer or cleanup again.**
@@ -97,7 +97,7 @@ Generated local map definitions can contain your HERE API key inside authenticat
 
 ## Troubleshooting
 
-* **Map missing:** check `\~/.local/share/io.github.rinigus/PureMaps/maps/` and restart Pure Maps completely.
+* **Map missing:** check `~/.local/share/io.github.rinigus/PureMaps/maps/` and restart Pure Maps completely.
 * **401 authentication error:** check the HERE key, licence acceptance, and service entitlement in Pure Maps.
 * **Traffic switch doesn't respond:** ensure `HERE Vector Traffic` is the selected map provider, disable *Switch map modes*, and use **Layers → Type → Traffic / Default**.
 * **Dark/bright styles don't switch:** choose **Day/night mode → Sunrise and sunset** and allow GPS, or set Manual and use sun/moon.
