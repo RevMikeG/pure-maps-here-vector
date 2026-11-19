@@ -59,7 +59,7 @@ If the map stays raster after starting navigation, check that no manual **Guidan
 The hybrid installer supports the existing **custom Jolla filenames**:
 
 * `here_vector_traffic_experimental.json`
-* `here_vector_day_no\traffic.json`
+* `here_vector_day_no_traffic.json`
 * `here_vector_night_traffic.json`
 * `here_vector_night_no_traffic.json`
 
