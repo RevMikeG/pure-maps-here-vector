@@ -1,33 +1,15 @@
-# HERE Hybrid Maps v1.3
+# HERE Hybrid Maps for Pure Maps v1.3
 
-**Raster browsing, vector navigation.** This release adds automatic map-format switching to the HERE Vector customisation for Pure Maps on Sailfish OS.
+A cleaned-up public release of our Jolla/Sailfish OS HERE map customisation.
 
-## Highlights
+**Browsing:** HERE raster map with traffic, day or night. **Route preview/navigation:** automatically switch to HERE vector maps with upright street names, a daytime palette based on the familiar HERE raster appearance, and the previously tested high-contrast night styling. End navigation to return automatically to raster.
 
-* **HERE raster map with traffic** for normal browsing, with automatic day/night selection.
-* **Automatic switch to HERE vector** for guidance and route previews, and back to raster after navigation.
-* **New daytime vector palette** modelled on the appearance of the HERE raster map: pale land, mint greens, blue-grey roads and light-blue water.
-* **Retains the tested night guidance map**, narrower major roads, 11-unit magenta route and improved GPS marker (the latter two via the existing optional navigation QML patch).
-* **Startup automatic-mode fix** clears the saved manual `basemap_type` and enables `basemap_auto_mode`, preventing the manual Guidance double-tap after restarting.
-* Supports both published v1.2.1 files and the older custom Jolla map filenames; the separate hybrid provider does not overwrite either source.
+The package now has a **single standalone hybrid installer** (`install.py`), a separate automatic mode-selection preference fix (`fix_auto_switch.py`) and an **optional** navigation QML patch (`navigation_patch.py`) for the 11-unit magenta route and GPS marker. Fresh installs create only the six definitions for **HERE Hybrid**, not an extra v1.2.1 provider. Safe removal verifies an installer manifest and each file's checksum. Existing compatible vector definitions are not modified.
 
-## Install
+**Installation:** See `README.md` for setup, prerequisites, backup and rollback instructions. This release needs an existing HERE API key and internet access. Private generated JSON may contain your key and must not be uploaded.
 
-See the full `README.md`. On a fresh setup with a working HERE API key:
+**For users of the previous experiment:** do not reinstall over a working setup. The installer deliberately refuses to replace existing experimental v1.3 files. Your own `HERE Hybrid Experimental` can continue working as it is.
 
-```sh
-python3 ~/Downloads/install.py
-python3 ~/Downloads/install_hybrid.py --dry-run
-python3 ~/Downloads/install_hybrid.py
-# With Pure Maps fully closed:
-python3 ~/Downloads/fix_auto_switch.py
-```
+Tested by syntax checking and simulated installation/removal, including fresh API-style generation and safeguards against deleting edited files. The author's earlier customised Jolla setup has been road-tested; this *clean* installer has not yet been independently verified on a fresh device.
 
-Select **HERE Hybrid Experimental**, enable **Switch map modes**, and keep automatic day/night selection enabled.
-
-**Existing author-tested hybrid setups require no reinstallation.**
-
-**Known limitation:** Pure Maps uses Layers → Type for automatic map modes, so the separate traffic on/off selector from v1.2.1 is not independent in the hybrid provider. Choose the `HERE Vector Traffic` provider to retain the original manual traffic toggle.
-
-Unofficial community project; tested on Pure Maps 3.5.1 on Sailfish OS. Do not adjust settings while driving.
-
+Unofficial community project, unaffiliated with HERE or the Pure Maps project. Changes to navigation settings should be tested while stationary.

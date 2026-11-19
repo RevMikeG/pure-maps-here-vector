@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
-"""HERE Vector for Pure Maps, community release v1.2.1.
+"""HERE Hybrid v1.3: standalone installer and verified rollback.
 
-Installs self-contained day/night MapLibre map styles with optional HERE live
-traffic raster overlays. Runs on the Jolla/Sailfish device, reuses the HERE API
-key already configured in Pure Maps, and NEVER prints the key.
-
-Generated map JSON files contain authenticated URLs. DO NOT publish those files.
+Creates one provider: raster while browsing, vector while navigating.
+Existing compatible vector styles are reused as input; otherwise new HERE
+styles are downloaded. Does not modify original styles or QML.
+Generated files may contain API credentials. NEVER commit them to GitHub.
 """
+import argparse
 import ast
 import copy
+import hashlib
 import json
 import os
 import re
 import sys
 from pathlib import Path
-from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit, quote
 from urllib.request import Request, urlopen
 
 HOME = Path.home()
@@ -83,11 +84,6 @@ NIGHT = {
     'road-highway-link': ('line-color', '#4B99D3'),
     'road-highway': ('line-color', '#4D9CE3'),
 }
-OPTIONS = [
-    # Only one provider is needed; Layers controls day/night and traffic.
-    ('traffic', 'HERE Vector Traffic', 'free'),
-]
-
 
 def read_key():
     for path in CONFIGS:
@@ -229,85 +225,320 @@ def without_traffic(spec):
     return item
 
 
-def main():
-    key, source = read_key()
-    if re.search(r'[\s&#?]', key):
-        raise RuntimeError('HERE key contains unexpected characters')
-    print('Using', source, '(key is not shown).')
-    request_url = BASE_URL + '?apikey=' + key
-    req = Request(request_url, headers={'User-Agent': 'PureMaps-HERE-Vector/1.2.1'})
-    with urlopen(req, timeout=35) as response:
-        base = json.load(response)
+
+# Approximate reference colours measured from user's HERE raster screenshot.
+# Note: exact pixels vary with opacity/antialiasing and zoom level.
+PALETTE = {
+    'background': '#F4F8FA',
+    'land': '#F4F8FA',
+    'urban': '#ECF1F7',
+    'park': '#C8EEE4',
+    'wood': '#B9E6D8',
+    'water': '#C7E2F4',
+    'motorway': '#9BAFCB',
+    'trunk': '#A9BDD4',
+    'primary': '#C1D2E8',
+    'secondary': '#D2E0F0',
+    'local': '#DCE7F3',
+}
+# For road outlines/casing a darker tint gives visual definition.
+CASING = {
+    'motorway': '#879DBA', 'trunk': '#97ADC8',
+    'primary': '#ADBFDA', 'secondary': '#C0D1E7', 'local': '#CAD9EA',
+}
+
+COLOR_RE = re.compile(r'^(?:#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\))$')
+
+
+def terms(layer):
+    parts = [str(layer.get('id', '')), str(layer.get('source-layer', ''))]
+    # Only filter metadata names, never arbitrary string values, to avoid URLs or keys.
+    filt = layer.get('filter')
+    if isinstance(filt, list):
+        parts.extend(str(x) for x in filt if isinstance(x, str) and len(x) < 80)
+    return ' '.join(parts).lower().replace('_', '-').replace(' ', '-')
+
+
+def classify(layer):
+    typ = layer.get('type')
+    name = terms(layer)
+    ident = str(layer.get('id', '')).lower()
+    if any(x in name for x in ('traffic', 'congestion', 'flow', 'incident', 'route', 'navigation', 'shield', 'label', 'text', 'symbol', 'rail', 'ferry', 'boundary', 'border', 'contour')):
+        return None
+    if typ == 'background': return 'background', 'background-color', False
+    if typ == 'fill':
+        if any(x in name for x in ('water', 'lake', 'river', 'ocean', 'sea')):
+            return 'water', 'fill-color', False
+        if any(x in name for x in ('forest', 'wood', 'tree')):
+            return 'wood', 'fill-color', False
+        if any(x in name for x in ('park', 'grass', 'garden', 'green', 'recreation', 'nature', 'vegetation', 'golf')):
+            return 'park', 'fill-color', False
+        if any(x in name for x in ('urban', 'residential', 'built-up', 'builtup', 'building', 'industrial', 'commercial')):
+            return 'urban', 'fill-color', False
+        if any(x in name for x in ('land', 'ground', 'earth')):
+            return 'land', 'fill-color', False
+    if typ == 'line':
+        if any(x in name for x in ('river', 'water', 'stream', 'canal')):
+            return 'water', 'line-color', False
+        if not any(x in name for x in ('road','highway','street','motorway','freeway','trunk','primary','secondary','tertiary','residential','minor','service','local','path','track')):
+            return None
+        casing = any(x in ident for x in ('casing', 'outline', 'border', 'edge', 'stroke'))
+        if any(x in name for x in ('motorway', 'freeway')): return 'motorway', 'line-color', casing
+        if 'trunk' in name: return 'trunk', 'line-color', casing
+        if any(x in name for x in ('primary', 'major')): return 'primary', 'line-color', casing
+        if any(x in name for x in ('secondary', 'tertiary')): return 'secondary', 'line-color', casing
+        if any(x in name for x in ('local', 'minor', 'residential', 'service', 'street', 'road', 'highway')):
+            return 'local', 'line-color', casing
+    return None
+
+
+def recolour(value, target):
+    """Keep style expression mechanics, replace *only* CSS colour literals inside."""
+    if isinstance(value, str):
+        if COLOR_RE.fullmatch(value.strip()):
+            return target, int(value.lower() != target.lower())
+        return value, 0
+    if isinstance(value, list):
+        result = []; changed = 0
+        for v in value:
+            nv, n = recolour(v, target)
+            result.append(nv); changed += n
+        return result, changed
+    # MapLibre colours generally arrays or strings, but support nested values safely.
+    if isinstance(value, dict):
+        result = {}; changed = 0
+        for k, v in value.items():
+            nv, n = recolour(v, target)
+            result[k] = nv; changed += n
+        return result, changed
+    return value, 0
+
+
+
+PROVIDER = 'HERE Hybrid'
+PREFIX = 'here_hybrid_v13_'
+MANIFEST = 'here_hybrid_v13_manifest.json'
+PROFILES = ['HERE', 'online', 'mixed']
+BUILTINS = [Path('/usr/share/harbour-pure-maps/maps'),
+            Path('/usr/share/pure-maps/maps'),
+            Path('/usr/share/harbour-pure-maps/poor/maps')]
+SOURCES = {
+    ('day', True): ('here_vector_traffic_experimental.json', 'here_v12_traffic_day.json'),
+    ('night', True): ('here_vector_night_traffic.json', 'here_v12_traffic_night.json'),
+    ('day', False): ('here_vector_day_no_traffic.json', 'here_v12_traffic_off_day.json'),
+    ('night', False): ('here_vector_night_no_traffic.json', 'here_v12_traffic_off_night.json'),
+}
+
+def read_json(p):
+    with p.open(encoding='utf-8') as f:
+        return json.load(f)
+
+def choose_vector(light, traffic):
+    expected_type = 'traffic' if traffic else 'default'
+    for candidate in SOURCES[(light, traffic)]:
+        path = MAPS / candidate
+        if not path.is_file() or path.is_symlink():
+            continue
+        obj = read_json(path)
+        if (obj.get('provider') == 'HERE Vector Traffic' and
+                obj.get('light') == light and obj.get('type') == expected_type and
+                obj.get('format') == 'mapbox-gl' and
+                isinstance(obj.get('style_json'), dict) and
+                isinstance(obj['style_json'].get('layers'), list)):
+            return obj, candidate
+    return None, None
+
+def recolour_day(style):
+    count = 0
+    for layer in style.get('layers', []):
+        match = classify(layer)
+        if not match:
+            continue
+        category, prop, casing = match
+        paint = layer.get('paint')
+        if not isinstance(paint, dict) or prop not in paint:
+            continue
+        new_value, n = recolour(paint[prop], CASING.get(category, PALETTE[category])
+                                if casing else PALETTE[category])
+        if n:
+            paint[prop] = new_value
+            count += 1
+    if count == 0:
+        raise RuntimeError('Daytime vector has no recognizable colour layers; refusing to generate mismatched style')
+    return count
+
+def raster(light):
+    name = 'here_4_traffic_' + light + '.json'
+    data = None
+    for folder in BUILTINS:
+        candidate = folder / name
+        if candidate.is_file():
+            item = read_json(candidate)
+            if item.get('format') == 'raster' and isinstance(item.get('tile_url'), list) and len(item['tile_url']) >= 2:
+                data = item
+                break
+    if data is None:
+        data = {
+            'format': 'raster', 'keys': ['HERE_APIKEY'], 'tile_size': 256,
+            'tile_url': [
+                'https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=#HERE_APIKEY#&ppi=400&size=512&features=pois:all&style=explore.' + light,
+                'https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?apiKey=#HERE_APIKEY#&ppi=400&size=512&style=explore.' + light,
+            ], 'attribution': {'© HERE': 'https://legal.here.com'},
+        }
+    data = copy.deepcopy(data)
+    data.update(provider=PROVIDER, name='HERE raster traffic (' + light + ')',
+                profiles=PROFILES, light=light, type='default')
+    data.pop('vehicle', None)
+    return data
+
+def fresh_vectors():
+    """Fetch once and generate base day/night styles without extra map providers."""
+    key, _ = read_key()
+    request_url = BASE_URL + '?apikey=' + quote(key, safe='')
+    with urlopen(Request(request_url, headers={'User-Agent': 'PureMaps-HERE-Hybrid/1.3'}), timeout=25) as response:
+        if response.status != 200:
+            raise RuntimeError('HERE vector style download failed')
         final_url = response.geturl()
+        base = json.load(response)
     if not isinstance(base, dict) or not isinstance(base.get('sources'), dict) or not isinstance(base.get('layers'), list):
-        raise RuntimeError('HERE did not return an expected MapLibre vector style')
+        raise RuntimeError('Unexpected HERE vector style')
     resolve_style(base, final_url, key)
-    MAPS.mkdir(parents=True, exist_ok=True)
-    os.chmod(MAPS, 0o700)
+    variants = {}
+    for light, colors in (('day', DAY), ('night', NIGHT)):
+        style = copy.deepcopy(base)
+        count = apply_palette(style, colors, night=light == 'night')
+        if count < 10:
+            raise RuntimeError('Unexpected HERE layer names: refusing partial style')
+        if light == 'night':
+            reduce_night_road_widths(style)
+        add_traffic(style, key, 'free')
+        traffic_map = create_map(style, PROVIDER, light)
+        traffic_map['type'] = 'traffic'
+        variants[(light, True)] = traffic_map
+        variants[(light, False)] = without_traffic(traffic_map)
+    return variants
 
-    # Prepare all outputs first; refuse to replace existing generated styles.
-    outputs = []
-    for slug, provider, traffic in OPTIONS:
-        for light, palette in [('day', DAY), ('night', NIGHT)]:
-            style = copy.deepcopy(base)
-            count = apply_palette(style, palette, night=(light == 'night'))
-            if count < 10:
-                raise RuntimeError('HERE layer names differ from the tested style; '
-                                   'refusing to install incomplete colour scheme')
-            if light == 'night':
-                reduce_night_road_widths(style)
-            add_traffic(style, key, traffic)
-            item = create_map(style, provider, light)
-            if slug == 'traffic':
-                # Layers > Type becomes Traffic ON / Default OFF, automatically
-                # respecting day/night mode because the provider is the same.
-                item['type'] = 'traffic'
-                off = without_traffic(item)
-                off['type'] = 'default'
-                off['name'] += ' (no traffic)'
-                outputs.append((f'here_v12_traffic_{light}.json', item))
-                outputs.append((f'here_v12_traffic_off_{light}.json', off))
-            else:
-                outputs.append((f'here_v12_{slug}_{light}.json', item))
-    collisions = [name for name, _ in outputs if (MAPS / name).exists()]
-    if collisions:
-        print('HERE Vector Traffic styles already exist; refusing to overwrite:', ', '.join(collisions))
-        print('Existing maps and keys unchanged.')
+
+def vector(light, mode, traffic, fallback):
+    data, source_name = choose_vector(light, traffic)
+    if data is None:
+        data = fallback[(light, traffic)]
+        source_name = 'fresh HERE vector style'
+    data = copy.deepcopy(data)
+    data.update(provider=PROVIDER, name='HERE vector ' + mode + ' (' + light + ')',
+                profiles=PROFILES, light=light, type=mode)
+    if light == 'day':
+        count = recolour_day(data['style_json'])
+        print('Prepared daytime', mode, 'with', count, 'recoloured layers from', source_name)
+    else:
+        print('Preserved night styling from', source_name)
+    return data
+
+def outputs(traffic=True):
+    fallback = {}
+    if any(choose_vector(light, traffic)[0] is None for light in ("day", "night")):
+        fallback = fresh_vectors()
+    result = {}
+    for light in ('day', 'night'):
+        result[PREFIX + 'raster_' + light + '.json'] = raster(light)
+        for mode in ('guidance', 'preview'):
+            result[PREFIX + 'vector_' + mode + '_' + light + '.json'] = vector(light, mode, traffic, fallback)
+    return result
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def safe_files():
+    if MAPS.is_symlink():
+        raise RuntimeError('Map directory is a symlink; refusing')
+    names = [PREFIX + mode + '_' + light + '.json'
+             for light in ('day', 'night')
+             for mode in ('raster', 'vector_guidance', 'vector_preview')]
+    return names
+
+
+def remove(dry=False):
+    manifest_path = MAPS / MANIFEST
+    if not manifest_path.is_file() or manifest_path.is_symlink():
+        raise RuntimeError('No v1.3 ownership manifest. No files removed.')
+    doc = read_json(manifest_path)
+    entries = doc.get('files')
+    if doc.get('provider') != PROVIDER or not isinstance(entries, dict) or set(entries) != set(safe_files()):
+        raise RuntimeError('Unrecognised v1.3 manifest. No files removed.')
+    for name, expected in entries.items():
+        path = MAPS / name
+        if not path.is_file() or path.is_symlink() or sha(path.read_bytes()) != expected:
+            raise RuntimeError('File changed or missing: ' + name + '. No files removed.')
+        item = read_json(path)
+        if item.get('provider') != PROVIDER:
+            raise RuntimeError('Unexpected provider in ' + name + '. No files removed.')
+    if dry:
+        print('Safe to remove', len(entries), 'owned v1.3 map files. No changes made.')
         return
-    created = []
-    try:
-        for filename, item in outputs:
-            dest = MAPS / filename
-            fd = os.open(str(dest), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-            try:
-                with os.fdopen(fd, 'w', encoding='utf-8') as f:
-                    json.dump(item, f, ensure_ascii=False, indent=2)
-                    f.write('\n')
-            except BaseException:
-                dest.unlink(missing_ok=True)
-                raise
-            created.append(dest)
-            print('Created:', filename)
-    except BaseException:
-        for dest in created:
-            dest.unlink(missing_ok=True)
-        raise
-    print('Installed', len(outputs), 'private v1.2.1 map definitions.')
-    print('Restart Pure Maps; select HERE profile and HERE Vector Traffic.')
-    print('For manual traffic overlay control, disable Preferences > Maps > Switch map modes.')
-    print('Layers > Type: Traffic = visible, Default = hidden.')
-    print('Keep Day/night mode > Sunrise and sunset for automatic switching.')
-    print('HERE congestion-aware ROUTING remains independent of overlay selection.')
-    print('CONFIDENTIAL: generated JSON files include authenticated HERE URLs; never publish them.')
+    for name in entries:
+        (MAPS / name).unlink()
+        print('Removed:', name)
+    manifest_path.unlink()
+    print('Removed only verified hybrid files; original maps and QML unchanged.')
 
+
+def install(dry=False):
+    expected = safe_files()
+    if (MAPS / MANIFEST).exists() or any((MAPS / name).exists() for name in expected):
+        raise RuntimeError('Hybrid files already exist. Nothing changed. Do not reinstall over a working setup.')
+    prepared = outputs()
+    if set(prepared) != set(expected):
+        raise RuntimeError('Unexpected generated file list; aborting')
+    print('Validated', len(prepared), 'HERE Hybrid map definitions.')
+    if dry:
+        print('Dry run: no files changed.')
+        return
+    MAPS.mkdir(parents=True, exist_ok=True)
+    if MAPS.is_symlink():
+        raise RuntimeError('Map directory is a symlink; refusing')
+    made = []
+    manifest_path = MAPS / MANIFEST
+    digest = {}
+    try:
+        for name, item in prepared.items():
+            data = (json.dumps(item, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+            path = MAPS / name
+            fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            made.append(path)
+            with os.fdopen(fd, 'wb') as f:
+                f.write(data)
+            digest[name] = sha(data)
+        data = (json.dumps({'provider': PROVIDER, 'files': digest}, indent=2) + '\n').encode('utf-8')
+        fd = os.open(str(manifest_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        made.append(manifest_path)
+        with os.fdopen(fd, 'wb') as f:
+            f.write(data)
+    except BaseException:
+        for path in made:
+            path.unlink(missing_ok=True)
+        raise
+    print('Installed HERE Hybrid. Select it under Settings > Maps.')
+    print('Enable automatic Switch map modes and sunrise/sunset lighting.')
+    print('Run fix_auto_switch.py while Pure Maps is closed to clear old manual type.')
+    print('Private generated JSON may contain your HERE key: do not publish.')
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--dry-run', action='store_true')
+    p.add_argument('--remove', action='store_true', help='Remove only unchanged files recorded in this installer manifest')
+    args = p.parse_args()
+    if args.remove:
+        remove(args.dry_run)
+    else:
+        install(args.dry_run)
 
 if __name__ == '__main__':
     try:
         main()
     except Exception as exc:
-        msg = str(exc)
-        if 'key' in locals() and isinstance(locals().get('key'), str):
-            msg = msg.replace(locals()['key'], '[redacted]')
-        msg = re.sub(r'(?i)(apiKey=)[^&\s]+', r'\1[redacted]', msg)
-        print('ERROR:', type(exc).__name__, msg, file=sys.stderr)
+        message = re.sub(r'(?i)(apiKey=)[^&\s]+', r'\1[redacted]', str(exc))
+        print('ERROR:', type(exc).__name__, message, file=sys.stderr)
         sys.exit(1)

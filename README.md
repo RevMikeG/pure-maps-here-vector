@@ -1,77 +1,57 @@
 # HERE Hybrid Maps for Pure Maps on Sailfish OS
 
-**Version 1.3 · 19 November 2026 · Unofficial community project**
+**v1.3 (clean release)** · Unofficial community project · Tested on a customised Jolla / Pure Maps 3.5.1 setup.
 
-A community modification for [Pure Maps](https://github.com/rinigus/pure-maps), developed and tested on a Jolla running Pure Maps 3.5.1. Version 1.3 adds an **automatic HERE raster browsing → HERE vector navigation** setup to the v1.2.1 HERE Vector project.
+Automatically use HERE **raster maps with traffic when browsing**, then switch to customised HERE **vector maps for route preview and navigation**, and return to raster when navigation ends. The vector map keeps street labels upright when rotating. Daytime vector colours approximate the HERE raster palette; night styling retains the tested high-contrast appearance.
 
-## What it does
+| Mode | Map style |
+| --- | --- |
+| Browsing | HERE raster with traffic; automatic day/night |
+| Route preview | HERE vector, raster-inspired daytime palette |
+| Navigation / following | HERE vector, high-contrast day/night |
+| Finish navigation | Return to raster automatically |
 
-|Activity|Map displayed|
-|-|-|
-|Normal map browsing|HERE raster (day/night) with live traffic overlay|
-|Route preview|Custom HERE vector (day/night)|
-|Turn-by-turn guidance|Custom HERE vector (day/night), with upright labels|
-|End navigation|Automatically returns to HERE raster|
-
-The **day vector palette** has been adjusted to resemble the familiar HERE raster map: pale land, mint-green parks, blue-grey main roads and pale blue water. The **night vector palette** retains the driving-tested, narrower blue motorways and muted A-roads. Navigation can use an **11-unit magenta line** and white/blue GPS marker with the optional QML patch.
-
-The traffic overlay is visible on the raster browsing map and on traffic-enabled vector navigation maps. **HERE traffic-aware routing is independent of the coloured traffic layer.** Pure Maps' mode switch takes ownership of Layers → Type in the hybrid provider, so v1.3 does **not** offer a fully independent traffic toggle during automatic map switching. For manual traffic on/off, select the separate `HERE Vector Traffic` provider from v1.2.1.
+This uses Pure Maps' existing map-mode switching. **Do not manually leave Guidance selected in Layers → Type:** that overrides the automatic behaviour. HERE routing can still account for traffic independently of the displayed traffic colours. In this hybrid provider, traffic overlay on/off is **not** an independent Layers toggle. The original `HERE Vector Traffic` provider (if present) remains available for that feature.
 
 ## Requirements
 
-* Sailfish OS/Jolla and Pure Maps with Mapbox GL vector support (tested with Pure Maps 3.5.1).
-* A valid HERE API key configured in Pure Maps, permitted access to HERE raster/vector/traffic services, and acceptance of applicable terms.
-* Internet access for HERE maps and live traffic. **This is not an offline map downloader.**
-* A working HERE Vector Traffic setup from v1.2.1 or the earlier custom Jolla build.
-* Python 3 on the phone. Run installers as the **normal Sailfish user**, not root.
+- Sailfish OS / Jolla, Python 3 and a Pure Maps version with HERE and Mapbox GL map support (developed with Pure Maps 3.5.1).
+- HERE API key available in Pure Maps and access to HERE raster, vector and traffic APIs.
+- Network access. This is **not an offline map download**.
+- Install scripts run as the regular Sailfish user, **not root**. Only the optional navigation QML patch requires `devel-su`.
 
-## New installation
+## Installation (fresh or existing vector setup)
 
-1. Download the package and extract the Python scripts into `~/Downloads/` on Sailfish OS. (If your browser saves the files elsewhere, use the actual directory.)
-2. Set up a HERE API key in Pure Maps. In Terminal run:
+1. Extract the release files into `~/Downloads/` on your Jolla. If your browser saved them somewhere else, substitute that actual directory.
+2. **Completely close Pure Maps.** In Terminal, run:
 
-```sh
+   ```sh
+   python3 ~/Downloads/install.py --dry-run
    python3 ~/Downloads/install.py
-   ```
-
-   This creates the four normal `HERE Vector Traffic` configurations. It will not overwrite existing maps. It fetches the HERE vector style online and may produce files containing authenticated URLs.
-
-3. Check the hybrid setup, then install it:
-
-```sh
-   python3 ~/Downloads/install_hybrid.py --dry-run
-   python3 ~/Downloads/install_hybrid.py
-   ```
-
-4. Completely close Pure Maps, then clear any saved manual map type so automatic switching survives a restart:
-
-```sh
    python3 ~/Downloads/fix_auto_switch.py
    ```
 
-5. Restart Pure Maps, select the **HERE** profile and **Settings → Maps → HERE Hybrid Experimental**. In **Preferences → Maps**, enable **Switch map modes** and set **Day/night mode → Sunrise and sunset**.
-6. While stationary, test starting navigation (vector) and ending navigation (raster), then restart Pure Maps and repeat.
+   The installer first reuses compatible, existing `HERE Vector Traffic` day/night styles when available. **If no suitable source is installed, it downloads a HERE vector style and creates the hybrid provider directly.** It does *not* install a second, redundant v1.2.1 map provider. `--dry-run` may download the base style for validation, but changes no local map files.
 
-If the map stays raster after starting navigation, check that no manual **Guidance** or other Layers → Type option is selected. Do not keep manually selecting Guidance: the automatic setting needs to be in control. The configuration fix above clears the saved manual selection.
+3. Open Pure Maps. Select the **HERE** profile and **Settings → Maps → HERE Hybrid**.
+4. Under **Preferences → Maps**, enable **Switch map modes** and set **Day/night mode → Sunrise and sunset**.
+5. Confirm that no manual **Guidance** (or other Type) selection remains active in Layers. Test route start/end while stationary; restart Pure Maps and test again.
 
-## Upgrade from the custom Jolla v1.2 setup
+Generated private map definitions go to:
 
-The hybrid installer supports the existing **custom Jolla filenames**:
+`~/.local/share/io.github.rinigus/PureMaps/maps/`
 
-* `here_vector_traffic_experimental.json`
-* `here_vector_day_no_traffic.json`
-* `here_vector_night_traffic.json`
-* `here_vector_night_no_traffic.json`
+### Already running the previous v1.3 experiment?
 
-It also supports the `here_v12_traffic_*.json` names generated by the published v1.2.1 installer. It copies them into a **separate provider**, without changing the source definitions.
+**Don't run the new installer over the working experiment.** It deliberately refuses to overwrite existing `here_hybrid_v13_*` files, even those created by earlier tests. Your tested `HERE Hybrid Experimental` provider can be left in place. The clean package is for new installations, or a deliberate migration with backups; there is no automatic migration that could replace your tested styles.
 
+The clean release's provider name is **HERE Hybrid**. Your existing experimental provider retains its current name unless you explicitly migrate it. You need not alter your own working installation just to publish this release.
 
+## Optional navigation QML patch
 
-## Optional navigation visibility patch
+`navigation_patch.py` is a **separate, optional** patch for supported Pure Maps 3.5.1 application QML. It applies the 11-unit magenta route styling and improves the blue/white GPS position marker's visibility above the route. It is **not** automatically run by `install.py`. Package upgrades can undo QML changes. The patch will refuse unfamiliar or previously patched QML structures; do not force it.
 
-`navigation_patch.py` is for supported Pure Maps 3.5.1 QML layouts only. It changes installed application files to set the **11-unit magenta route** and draw an improved **white-and-blue GPS marker above the route**. It makes backups and can refuse to operate if the app files have already been modified by an older patch. **Do not reapply it to a working customised phone.**
-
-For a fresh, compatible Pure Maps 3.5.1 installation, after closing Pure Maps:
+After fully closing Pure Maps:
 
 ```sh
 devel-su
@@ -79,11 +59,13 @@ python3 /home/defaultuser/Downloads/navigation_patch.py install
 exit
 ```
 
-Status / rollback (only when this exact script created its backup):
+To inspect patch status (normal user):
 
 ```sh
 python3 ~/Downloads/navigation_patch.py status
 ```
+
+To restore **only** the backup created by this patch:
 
 ```sh
 devel-su
@@ -91,26 +73,31 @@ python3 /home/defaultuser/Downloads/navigation_patch.py restore
 exit
 ```
 
-## Rollback
+**Do not reapply the optional patch to a phone with the tested GPS and route adjustments already installed.**
 
-* In **Settings → Maps**, return to **HERE Vector Traffic** first.
-* Close Pure Maps and remove only the added hybrid definitions:
+## Safe removal
 
-```sh
-  python3 ~/Downloads/install_hybrid.py --remove
-  ```
+1. In Pure Maps select another map provider, then fully close Pure Maps.
+2. Check removal eligibility, then remove the six installed hybrid map definitions:
 
-* The original vector map files and any previously installed QML navigation patch remain untouched.
-* The `fix_auto_switch.py` tool keeps a backup named `pure-maps.before-v13-auto-switch.json` alongside the config. Restore it **only with Pure Maps closed**, and only if you deliberately want to restore your earlier saved preferences (it may contain other settings from before the change).
+   ```sh
+   python3 ~/Downloads/install.py --remove --dry-run
+   python3 ~/Downloads/install.py --remove
+   ```
 
-## Security, limitations and acknowledgements
+Removal requires an installer-generated manifest and checks each file's SHA-256 and provider metadata before deleting anything. It **refuses** removal if a file is changed, missing or doesn't belong to this installer. It will not remove older experimental v1.3 files without its manifest, nor touch original vector definitions or application QML. It does not undo the saved map-mode preference adjustment.
 
-* Local generated map definitions **may include HERE API credentials** in tile, font and sprite URLs. 
-* This is an unofficial community project, not affiliated with HERE or endorsed by Pure Maps.
-* This package was syntax-checked and tested with simulated sample configurations. On-road confirmation applies to the author's customised Jolla, not every Sailfish release or device.
-* HERE raster and vector formats switch as the map changes. Automatic mode selection is supported by Pure Maps; it must be enabled and not overridden by a manual Layers Type setting.
-* Pure Maps updates may restore the original QML navigation files.
-* Only adjust navigation settings while stationary.
+`fix_auto_switch.py` makes a separate backup of `pure-maps.json` called `pure-maps.before-v13-auto-switch.json` beside the configuration. Restore that whole backup only deliberately, with Pure Maps closed, since it may also revert unrelated preference changes made since it was saved.
 
-See `CHANGELOG.md` and `RELEASE_NOTES.md` for the version history.
+## Files in this release
 
+- `install.py` - single standalone hybrid map installer, with verified removal and dry-run.
+- `fix_auto_switch.py` - saves automatic map-mode settings, with configuration backup.
+- `navigation_patch.py` - optional, reversible QML visibility enhancements.
+- `README.md`, `CHANGELOG.md`, `RELEASE_NOTES.md`, `.gitignore` - public project documentation.
+
+**No** separate colour-testing tools, redundant v1.2.1 installer, experimental inspection scripts or generated style JSON files are required.
+
+## Limitations
+
+Daytime vector colours are approximated from the raster reference, not exact pixel equivalents. A fresh installation is simulated and syntax-tested but has not yet been road-tested on a second Jolla device. The hybrid provider uses `Default` for raster, and `Preview`/`Guidance` for vector, so the manual Layers traffic toggle from v1.2.1 is not independently available. This is a community modification, unaffiliated with HERE or the Pure Maps maintainers. Make navigation-setting changes only while stationary.

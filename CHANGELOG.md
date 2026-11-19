@@ -1,36 +1,33 @@
 # Changelog
 
-## v1.3 — 19 November 2026
+## v1.3 (clean release)
 
-* Added `HERE Hybrid Experimental`: HERE raster traffic map for browsing and custom vector maps for Preview/Guidance, with automatic return to raster.
-* Matched daytime vector colours to the HERE raster reference screenshot while preserving night navigation styling.
-* Added a backed-up `fix_auto_switch.py` to clear persistent manual Guidance selection after reboot.
-* Made hybrid installation detect both the older custom Jolla map filenames and published v1.2.1 definitions.
-* Preserved original map providers, HERE routing and optional navigation QML patch.
-* Documented that traffic on/off is not independently selectable within the hybrid automatic mode.
+- Add one **HERE Hybrid** provider: HERE raster with traffic during browsing; customised HERE vector during route previews, navigation and follow mode.
+- Retain automatic day/night switching, cooler raster-inspired daytime vector palette, and road-tested narrower night roads and high-contrast styling.
+- Use one hybrid map installer (`install.py`) for both fresh and existing installations. Generate six hybrid definitions directly, without installing a redundant vector provider on new devices.
+- Reuse earlier compatible vector style definitions without modifying them.
+- Include `fix_auto_switch.py` to clear saved manual Type selections after a full application exit; back up preferences before writing.
+- Add manifest-based removal that refuses to delete modified or unowned files.
+- Retain optional, reversible 11-unit route and GPS marker QML patch.
+- Remove old test utilities, duplicate setup scripts and `Experimental` from the new provider's display name. Preserve the existing working experimental provider on users' devices.
+- No private API credentials or generated map definitions distributed.
 
+## v1.2.1
 
+- Simplify map selection and use standard Sailfish OS Downloads paths in the public instructions.
 
-## v1.2.1 — 19 November 2026
+## v1.2
 
-* Simplified fresh installations to **one HERE Vector Traffic provider**, with four day/night and traffic-on/off styles controlled from Layers.
-* Included `tidy_here_maps.py` for reversible removal of redundant custom HERE Vector Colour and Queues providers from existing installations.
-* Standardised installation and restore commands on Sailfish OS `~/Downloads/` (no Android storage references).
-* Retained v1.2's tested night-road widths, 11-unit navigation route and GPS position marker without change.
+- Toggle traffic-overlay display in the vector-only provider; adjust night road widths and navigation route prominence.
 
+## v1.1
 
+- Improve route visibility and GPS marker layering.
 
-## v1.2 — 18 November 2026
+## v1.0
 
-* Added traffic **on/off** via existing **Layers → Type** selector, keeping the HERE routing profile intact.
-* Created paired day/night map variants within the same HERE Vector Traffic provider.
-* Reduced overly wide night motorways (42%) and links/trunk roads (30%).
-* Refined night A-road colours for better contrast with the navigation route.
-* Set the navigation QML patch to the driving-tested **11-unit magenta line** with matching casing gap.
-* Retained the white-and-blue GPS marker above navigation layers.
-* Updated installation, rollback and credential-privacy instructions.
+- Custom HERE vector daytime/night-time styling and traffic overlays.
 
-## v0.1-alpha — 17 November 2026
+## v0.1-alpha
 
-* Initial HERE vector-map definition for Pure Maps on Sailfish OS.
-
+- Initial HERE vector map definition for Pure Maps.
