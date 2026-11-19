@@ -8,7 +8,7 @@ Adds HERE vector maps with upright labels, colourful day/night rendering, option
 
 * New installs expose **one HERE Vector Traffic map provider** in **Settings → Maps**, rather than separate Colour, Traffic and Queues entries.
 * **Layers → Type → Default / Traffic** retains traffic on/off control, and **Layers → Light → Day / Night** retains manual map lighting controls.
-* Includes `tidy\_here\_maps.py` to archive redundant custom HERE Vector providers on existing installations, with a reversible `--restore` operation.
+* Includes `tidy_here_maps.py` to archive redundant custom HERE Vector providers on existing installations, with a reversible `--restore` operation.
 * No change to the road-tested v1.2 route, night styling or position marker.
 
 ## Features inherited from v1.2
@@ -47,27 +47,27 @@ Adds HERE vector maps with upright labels, colourful day/night rendering, option
 
 ### Optional: navigation display patch
 
-The map-style installer works without root. The **optional** `navigation\_patch.py` changes installed QML to draw an **11-unit magenta navigation route**, a slimmer casing and a **white/blue GPS marker above it**. It changes `/usr/share/harbour-pure-maps/qml/Map.qml` and `PositionMarker.qml` and backs up both before changes.
+The map-style installer works without root. The **optional** `navigation_patch.py` changes installed QML to draw an **11-unit magenta navigation route**, a slimmer casing and a **white/blue GPS marker above it**. It changes `/usr/share/harbour-pure-maps/qml/Map.qml` and `PositionMarker.qml` and backs up both before changes.
 
 Completely close Pure Maps, then:
 
 ```sh
 devel-su
-python3 /home/defaultuser/Downloads/navigation\_patch.py install
+python3 /home/defaultuser/Downloads/navigation_patch.py install
 exit
 ```
 
 Check without modifying files:
 
 ```sh
-python3 ~/Downloads/navigation\_patch.py status
+python3 ~/Downloads/navigation_patch.py status
 ```
 
 To restore **only if this v1.2 script created the backup**:
 
 ```sh
 devel-su
-python3 /home/defaultuser/Downloads/navigation\_patch.py restore
+python3 /home/defaultuser/Downloads/navigation_patch.py restore
 exit
 ```
 
@@ -75,10 +75,10 @@ If you used older experimental navigation patches, their old backups remain sepa
 
 ## Clean up an existing v1.2 installation
 
-Existing installations can still show the additional **HERE Vector Colour** and **HERE Vector Queues** entries in **Settings → Maps**. To retain only **HERE Vector Traffic** (and keep its Day/Night and Default/Traffic choices in Layers), download `tidy\_here\_maps.py` and fully close Pure Maps before running:
+Existing installations can still show the additional **HERE Vector Colour** and **HERE Vector Queues** entries in **Settings → Maps**. To retain only **HERE Vector Traffic** (and keep its Day/Night and Default/Traffic choices in Layers), download `tidy_here_maps.py` and fully close Pure Maps before running:
 
 ```sh
-python3 ~/Downloads/tidy\_here\_maps.py
+python3 ~/Downloads/tidy_here_maps.py
 ```
 
 This tool checks the four required day/night and traffic-on/off variants exist before moving extra custom HERE Vector definitions to a private backup folder. It does not touch built-in HERE maps or app QML. Run it as the regular Sailfish user, **not** with `devel-su`.
@@ -86,7 +86,7 @@ This tool checks the four required day/night and traffic-on/off variants exist b
 To undo the cleanup, close Pure Maps and run:
 
 ```sh
-python3 ~/Downloads/tidy\_here\_maps.py --restore
+python3 ~/Downloads/tidy_here_maps.py --restore
 ```
 
 **If your setup already has just one HERE Vector Traffic provider, you do not need to run the installer or cleanup again.**
