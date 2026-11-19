@@ -1,9 +1,21 @@
 # Changelog
 
+## v1.3 — 19 November 2026
+
+* Added `HERE Hybrid Experimental`: HERE raster traffic map for browsing and custom vector maps for Preview/Guidance, with automatic return to raster.
+* Matched daytime vector colours to the HERE raster reference screenshot while preserving night navigation styling.
+* Added a backed-up `fix\_auto\_switch.py` to clear persistent manual Guidance selection after reboot.
+* Made hybrid installation detect both the older custom Jolla map filenames and published v1.2.1 definitions.
+* Preserved original map providers, HERE routing and optional navigation QML patch.
+* Documented that traffic on/off is not independently selectable within the hybrid automatic mode.
+
+
+
 ## v1.2.1 — 19 November 2026
 
 * Simplified fresh installations to **one HERE Vector Traffic provider**, with four day/night and traffic-on/off styles controlled from Layers.
-* Included `tidy_here_maps.py` for reversible removal of redundant custom HERE Vector Colour and Queues providers from existing installations.
+* Included `tidy\_here\_maps.py` for reversible removal of redundant custom HERE Vector Colour and Queues providers from existing installations.
+* Standardised installation and restore commands on Sailfish OS `\~/Downloads/` (no Android storage references).
 * Retained v1.2's tested night-road widths, 11-unit navigation route and GPS position marker without change.
 
 

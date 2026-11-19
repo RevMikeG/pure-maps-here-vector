@@ -1,116 +1,116 @@
-# HERE Vector Maps for Pure Maps on Sailfish OS
+# HERE Hybrid Maps for Pure Maps on Sailfish OS
 
-**v1.2.1** · Unofficial community customisation for [Pure Maps](https://github.com/rinigus/pure-maps), developed and tested on a Jolla Phone running **Pure Maps 3.5.1**.
+**Version 1.3 · 19 November 2026 · Unofficial community project**
 
-Adds HERE vector maps with upright labels, colourful day/night rendering, optional traffic-flow overlays and improved navigation visibility. **HERE congestion-aware routing still comes from the HERE routing profile**, not from the map overlay.
+A community modification for [Pure Maps](https://github.com/rinigus/pure-maps), developed and tested on a Jolla running Pure Maps 3.5.1. Version 1.3 adds an **automatic HERE raster browsing → HERE vector navigation** setup to the v1.2.1 HERE Vector project.
 
-## What's new in v1.2.1
+## What it does
 
-* New installs expose **one HERE Vector Traffic map provider** in **Settings → Maps**, rather than separate Colour, Traffic and Queues entries.
-* **Layers → Type → Default / Traffic** retains traffic on/off control, and **Layers → Light → Day / Night** retains manual map lighting controls.
-* Includes `tidy_here_maps.py` to archive redundant custom HERE Vector providers on existing installations, with a reversible `--restore` operation.
-* No change to the road-tested v1.2 route, night styling or position marker.
+|Activity|Map displayed|
+|-|-|
+|Normal map browsing|HERE raster (day/night) with live traffic overlay|
+|Route preview|Custom HERE vector (day/night)|
+|Turn-by-turn guidance|Custom HERE vector (day/night), with upright labels|
+|End navigation|Automatically returns to HERE raster|
 
-## Features inherited from v1.2
+The **day vector palette** has been adjusted to resemble the familiar HERE raster map: pale land, mint-green parks, blue-grey main roads and pale blue water. The **night vector palette** retains the driving-tested, narrower blue motorways and muted A-roads. Navigation can use an **11-unit magenta line** and white/blue GPS marker with the optional QML patch.
 
-* **Layers → Type → Traffic / Default** toggles coloured traffic display on/off within the same provider, for **both day and night**.
-* **Night road-width improvement:** motorways 42% narrower; motorway links and trunk roads 30% narrower, to keep the navigation line visible.
-* **More distinctive night palette:** muted grey A-roads and clear blue motorways.
-* **11-unit magenta navigation route** (instead of the old 7-unit width), with a stronger blue-and-white GPS position marker above the line.
-* **Day/night switch** still works automatically at sunrise and sunset or manually from Layers.
-* Safeguards around user API keys and existing installations.
+The traffic overlay is visible on the raster browsing map and on traffic-enabled vector navigation maps. **HERE traffic-aware routing is independent of the coloured traffic layer.** Pure Maps' mode switch takes ownership of Layers → Type in the hybrid provider, so v1.3 does **not** offer a fully independent traffic toggle during automatic map switching. For manual traffic on/off, select the separate `HERE Vector Traffic` provider from v1.2.1.
 
 ## Requirements
 
-* Jolla / Sailfish OS, Pure Maps with Mapbox GL vector rendering (tested on version 3.5.1).
-* A valid HERE API key already available in Pure Maps, with relevant HERE vector/traffic service access and accepted HERE terms.
-* Internet access for downloading vector tiles and real-time traffic.
-* Developer Mode / `devel-su` **only** for the optional navigation QML patch.
+* Sailfish OS/Jolla and Pure Maps with Mapbox GL vector support (tested with Pure Maps 3.5.1).
+* A valid HERE API key configured in Pure Maps, permitted access to HERE raster/vector/traffic services, and acceptance of applicable terms.
+* Internet access for HERE maps and live traffic. **This is not an offline map downloader.**
+* A working HERE Vector Traffic setup from v1.2.1 or the earlier custom Jolla build.
+* Python 3 on the phone. Run installers as the **normal Sailfish user**, not root.
 
-## For a new installation
+## New installation
 
-1. Download `install.py` onto your Sailfish phone.
-2. In Terminal run:
+1. Download the package and extract the Python scripts into `\~/Downloads/` on Sailfish OS. (If your browser saves the files elsewhere, use the actual directory.)
+2. Set up a HERE API key in Pure Maps. In Terminal run:
 
 ```sh
-   python3 ~/Downloads/install.py
+   python3 \~/Downloads/install.py
    ```
 
-   If the browser saved it elsewhere, move the file to `~/Downloads/` or adjust the command to match its location.
+   This creates the four normal `HERE Vector Traffic` configurations. It will not overwrite existing maps. It fetches the HERE vector style online and may produce files containing authenticated URLs.
 
-3. Fully close and reopen Pure Maps, select the **HERE** profile, then choose **HERE Vector Traffic** from Settings → Maps.
-4. Under **Preferences → Maps**, turn **Switch map modes** **off** for predictable manual traffic display selection, and choose **Day/night mode → Sunrise and sunset**.
-5. In the **Layers** menu, select **Traffic** to display traffic colours or **Default** to hide them. Day/night continues to work independently.
-6. To keep routes congestion-aware, enable **Traffic** in HERE route options and configure traffic updates during navigation, where available. The visual overlay toggle does not disable traffic-aware route calculations.
+3. Check the hybrid setup, then install it:
+
+```sh
+   python3 \~/Downloads/install\_hybrid.py --dry-run
+   python3 \~/Downloads/install\_hybrid.py
+   ```
+
+4. Completely close Pure Maps, then clear any saved manual map type so automatic switching survives a restart:
+
+```sh
+   python3 \~/Downloads/fix\_auto\_switch.py
+   ```
+
+5. Restart Pure Maps, select the **HERE** profile and **Settings → Maps → HERE Hybrid Experimental**. In **Preferences → Maps**, enable **Switch map modes** and set **Day/night mode → Sunrise and sunset**.
+6. While stationary, test starting navigation (vector) and ending navigation (raster), then restart Pure Maps and repeat.
+
+If the map stays raster after starting navigation, check that no manual **Guidance** or other Layers → Type option is selected. Do not keep manually selecting Guidance: the automatic setting needs to be in control. The configuration fix above clears the saved manual selection.
+
+## Upgrade from the custom Jolla v1.2 setup
+
+The hybrid installer supports the existing **custom Jolla filenames**:
+
+* `here\_vector\_traffic\_experimental.json`
+* `here\_vector\_day\_no\_traffic.json`
+* `here\_vector\_night\_traffic.json`
+* `here\_vector\_night\_no\_traffic.json`
+
+It also supports the `here\_v12\_traffic\_\*.json` names generated by the published v1.2.1 installer. It copies them into a **separate provider**, without changing the source definitions.
 
 
 
-### Optional: navigation display patch
+## Optional navigation visibility patch
 
-The map-style installer works without root. The **optional** `navigation_patch.py` changes installed QML to draw an **11-unit magenta navigation route**, a slimmer casing and a **white/blue GPS marker above it**. It changes `/usr/share/harbour-pure-maps/qml/Map.qml` and `PositionMarker.qml` and backs up both before changes.
+`navigation\_patch.py` is for supported Pure Maps 3.5.1 QML layouts only. It changes installed application files to set the **11-unit magenta route** and draw an improved **white-and-blue GPS marker above the route**. It makes backups and can refuse to operate if the app files have already been modified by an older patch. **Do not reapply it to a working customised phone.**
 
-Completely close Pure Maps, then:
+For a fresh, compatible Pure Maps 3.5.1 installation, after closing Pure Maps:
 
 ```sh
 devel-su
-python3 /home/defaultuser/Downloads/navigation_patch.py install
+python3 /home/defaultuser/Downloads/navigation\_patch.py install
 exit
 ```
 
-Check without modifying files:
+Status / rollback (only when this exact script created its backup):
 
 ```sh
-python3 ~/Downloads/navigation_patch.py status
+python3 \~/Downloads/navigation\_patch.py status
 ```
-
-To restore **only if this v1.2 script created the backup**:
 
 ```sh
 devel-su
-python3 /home/defaultuser/Downloads/navigation_patch.py restore
+python3 /home/defaultuser/Downloads/navigation\_patch.py restore
 exit
 ```
 
-If you used older experimental navigation patches, their old backups remain separate. **Do not blindly restore an older backup over a newer patch.** Application package upgrades may overwrite QML changes. The patch refuses unfamiliar source layouts instead of forcing an edit.
+## Rollback
 
-## Clean up an existing v1.2 installation
-
-Existing installations can still show the additional **HERE Vector Colour** and **HERE Vector Queues** entries in **Settings → Maps**. To retain only **HERE Vector Traffic** (and keep its Day/Night and Default/Traffic choices in Layers), download `tidy_here_maps.py` and fully close Pure Maps before running:
-
-```sh
-python3 ~/Downloads/tidy_here_maps.py
-```
-
-This tool checks the four required day/night and traffic-on/off variants exist before moving extra custom HERE Vector definitions to a private backup folder. It does not touch built-in HERE maps or app QML. Run it as the regular Sailfish user, **not** with `devel-su`.
-
-To undo the cleanup, close Pure Maps and run:
+* In **Settings → Maps**, return to **HERE Vector Traffic** first.
+* Close Pure Maps and remove only the added hybrid definitions:
 
 ```sh
-python3 ~/Downloads/tidy_here_maps.py --restore
-```
+  python3 \~/Downloads/install\_hybrid.py --remove
+  ```
 
-**If your setup already has just one HERE Vector Traffic provider, you do not need to run the installer or cleanup again.**
+* The original vector map files and any previously installed QML navigation patch remain untouched.
+* The `fix\_auto\_switch.py` tool keeps a backup named `pure-maps.before-v13-auto-switch.json` alongside the config. Restore it **only with Pure Maps closed**, and only if you deliberately want to restore your earlier saved preferences (it may contain other settings from before the change).
 
-## Privacy and licence
+## Security, limitations and acknowledgements
 
-Generated local map definitions can contain your HERE API key inside authenticated tile, sprite and glyph URLs. 
+* Local generated map definitions **may include HERE API credentials** in tile, font and sprite URLs. 
+* This is an unofficial community project, not affiliated with HERE or endorsed by Pure Maps.
+* This package was syntax-checked and tested with simulated sample configurations. On-road confirmation applies to the author's customised Jolla, not every Sailfish release or device.
+* HERE raster and vector formats switch as the map changes. Automatic mode selection is supported by Pure Maps; it must be enabled and not overridden by a manual Layers Type setting.
+* Pure Maps updates may restore the original QML navigation files.
+* Only adjust navigation settings while stationary.
 
-## Troubleshooting
-
-* **Map missing:** check `~/.local/share/io.github.rinigus/PureMaps/maps/` and restart Pure Maps completely.
-* **401 authentication error:** check the HERE key, licence acceptance, and service entitlement in Pure Maps.
-* **Traffic switch doesn't respond:** ensure `HERE Vector Traffic` is the selected map provider, disable *Switch map modes*, and use **Layers → Type → Traffic / Default**.
-* **Dark/bright styles don't switch:** choose **Day/night mode → Sunrise and sunset** and allow GPS, or set Manual and use sun/moon.
-* **Navigation patch rejected:** the QML structure may differ, or earlier patches/backups may be present. Do not force it. Report the exact error.
-* **After an upgrade:** verify whether Pure Maps package updates restored the original QML files.
-
-## History
-
-* `v0.1-alpha` Basic HERE vector style.
-* `v1.0` Day/night styling and live traffic overlays.
-* `v1.1` Navigation visibility and GPS layer ordering.
-* `v1.2` Traffic display toggle, 11-unit route and night road visibility refinements.
-* `v1.2.1` Single-provider Settings → Maps cleanup.
-
-See [CHANGELOG.md](CHANGELOG.md). This project is unofficial, independent of HERE and Pure Maps. Test navigation while stationary; never adjust phone settings while driving.
+See `CHANGELOG.md` and `RELEASE\_NOTES.md` for the version history.
 

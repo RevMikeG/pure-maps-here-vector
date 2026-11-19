@@ -1,37 +1,33 @@
-# HERE Vector Maps v1.2.1 — Cleaner map selection
+# HERE Hybrid Maps v1.3
 
-This maintenance release builds on v1.2 for Pure Maps on Sailfish OS (tested by the author on a Jolla Phone with Pure Maps 3.5.1).
+**Raster browsing, vector navigation.** This release adds automatic map-format switching to the HERE Vector customisation for Pure Maps on Sailfish OS.
 
-### Changes
+## Highlights
 
-* Fresh installations create just one custom **HERE Vector Traffic** provider in **Settings → Maps**.
-* The existing **Layers → Type → Default / Traffic** selection controls traffic overlay visibility; **Layers → Light** controls day and night when using manual map lighting.
-* Added the reversible `tidy_here_maps.py` for installations with extra HERE Vector Colour/Queues provider entries.
-* No changes to the driving-tested magenta route, GPS position marker, traffic-aware HERE routing or night palette.
+* **HERE raster map with traffic** for normal browsing, with automatic day/night selection.
+* **Automatic switch to HERE vector** for guidance and route previews, and back to raster after navigation.
+* **New daytime vector palette** modelled on the appearance of the HERE raster map: pale land, mint greens, blue-grey roads and light-blue water.
+* **Retains the tested night guidance map**, narrower major roads, 11-unit magenta route and improved GPS marker (the latter two via the existing optional navigation QML patch).
+* **Startup automatic-mode fix** clears the saved manual `basemap\_type` and enables `basemap\_auto\_mode`, preventing the manual Guidance double-tap after restarting.
+* Supports both published v1.2.1 files and the older custom Jolla map filenames; the separate hybrid provider does not overwrite either source.
 
-### New installation
+## Install
 
-Copy `install.py` to your Sailfish OS Downloads folder and run:
-
-```sh
-python3 ~/Downloads/install.py
-```
-
-See [README.md](README.md) for the optional navigation QML patch and settings.
-
-### Already using v1.2?
-
-You do **not** need to reinstall your working maps. If Settings → Maps still shows extra custom HERE Vector Colour or Queues providers, run the cleanup script with Pure Maps closed:
+See the full `README.md`. On a fresh setup with a working HERE API key:
 
 ```sh
-python3 ~/Downloads/tidy_here_maps.py
+python3 \~/Downloads/install.py
+python3 \~/Downloads/install\_hybrid.py --dry-run
+python3 \~/Downloads/install\_hybrid.py
+# With Pure Maps fully closed:
+python3 \~/Downloads/fix\_auto\_switch.py
 ```
 
-To restore those archived entries:
+Select **HERE Hybrid Experimental**, enable **Switch map modes**, and keep automatic day/night selection enabled.
 
-```sh
-python3 ~/Downloads/tidy_here_maps.py --restore
-```
+**Existing author-tested hybrid setups require no reinstallation.**
 
-This is an unofficial community project. The consolidated fresh-install script has not yet been tested on a new device; the v1.2 features were tested on the author's Jolla.
+**Known limitation:** Pure Maps uses Layers → Type for automatic map modes, so the separate traffic on/off selector from v1.2.1 is not independent in the hybrid provider. Choose the `HERE Vector Traffic` provider to retain the original manual traffic toggle.
+
+Unofficial community project; tested on Pure Maps 3.5.1 on Sailfish OS. Do not adjust settings while driving.
 
