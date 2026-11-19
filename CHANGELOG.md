@@ -3,7 +3,7 @@
 ## v1.2.1 — 19 November 2026
 
 * Simplified fresh installations to **one HERE Vector Traffic provider**, with four day/night and traffic-on/off styles controlled from Layers.
-* Included `tidy\\\_here\\\_maps.py` for reversible removal of redundant custom HERE Vector Colour and Queues providers from existing installations.
+* Included `tidy_here_maps.py` for reversible removal of redundant custom HERE Vector Colour and Queues providers from existing installations.
 * Retained v1.2's tested night-road widths, 11-unit navigation route and GPS position marker without change.
 
 
