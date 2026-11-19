@@ -8,7 +8,7 @@
 * **Automatic switch to HERE vector** for guidance and route previews, and back to raster after navigation.
 * **New daytime vector palette** modelled on the appearance of the HERE raster map: pale land, mint greens, blue-grey roads and light-blue water.
 * **Retains the tested night guidance map**, narrower major roads, 11-unit magenta route and improved GPS marker (the latter two via the existing optional navigation QML patch).
-* **Startup automatic-mode fix** clears the saved manual `basemap\_type` and enables `basemap\_auto\_mode`, preventing the manual Guidance double-tap after restarting.
+* **Startup automatic-mode fix** clears the saved manual `basemap_type` and enables `basemap_auto_mode`, preventing the manual Guidance double-tap after restarting.
 * Supports both published v1.2.1 files and the older custom Jolla map filenames; the separate hybrid provider does not overwrite either source.
 
 ## Install
@@ -16,11 +16,11 @@
 See the full `README.md`. On a fresh setup with a working HERE API key:
 
 ```sh
-python3 \~/Downloads/install.py
-python3 \~/Downloads/install\_hybrid.py --dry-run
-python3 \~/Downloads/install\_hybrid.py
+python3 ~/Downloads/install.py
+python3 ~/Downloads/install_hybrid.py --dry-run
+python3 ~/Downloads/install_hybrid.py
 # With Pure Maps fully closed:
-python3 \~/Downloads/fix\_auto\_switch.py
+python3 ~/Downloads/fix_auto_switch.py
 ```
 
 Select **HERE Hybrid Experimental**, enable **Switch map modes**, and keep automatic day/night selection enabled.
