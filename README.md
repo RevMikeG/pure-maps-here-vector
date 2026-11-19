@@ -112,5 +112,5 @@ exit
 * Pure Maps updates may restore the original QML navigation files.
 * Only adjust navigation settings while stationary.
 
-See `CHANGELOG.md` and `RELEASE\_NOTES.md` for the version history.
+See `CHANGELOG.md` and `RELEASE_NOTES.md` for the version history.
 
