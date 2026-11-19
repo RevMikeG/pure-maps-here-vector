@@ -101,7 +101,7 @@ exit
   ```
 
 * The original vector map files and any previously installed QML navigation patch remain untouched.
-* The `fix\_auto\_switch.py` tool keeps a backup named `pure-maps.before-v13-auto-switch.json` alongside the config. Restore it **only with Pure Maps closed**, and only if you deliberately want to restore your earlier saved preferences (it may contain other settings from before the change).
+* The `fix_auto_switch.py` tool keeps a backup named `pure-maps.before-v13-auto-switch.json` alongside the config. Restore it **only with Pure Maps closed**, and only if you deliberately want to restore your earlier saved preferences (it may contain other settings from before the change).
 
 ## Security, limitations and acknowledgements
 
