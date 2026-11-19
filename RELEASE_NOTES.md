@@ -1,23 +1,37 @@
-# HERE Vector Maps v1.2 — Traffic control and improved night navigation
+# HERE Vector Maps v1.2.1 — Cleaner map selection
 
-This community release for **Pure Maps on Sailfish OS** consolidates the configuration tested on a Jolla Phone with Pure Maps 3.5.1.
+This maintenance release builds on v1.2 for Pure Maps on Sailfish OS (tested by the author on a Jolla Phone with Pure Maps 3.5.1).
 
-### Highlights
+### Changes
 
-* Toggle visual HERE traffic colours through **Layers → Type → Traffic / Default**.
-* Keep congestion-aware HERE **routing** independently of the traffic display toggle.
-* Automatic sunrise/sunset switching between bright day maps and high-contrast night maps.
-* Narrower night motorways and muted A-road colours, making navigation clearer.
-* Driving-tested **11-unit magenta route**, with a highly visible blue-and-white GPS position marker.
-* Reproducible installer, optional QML patch, rollback precautions and credential-safe public files.
+* Fresh installations create just one custom **HERE Vector Traffic** provider in **Settings → Maps**.
+* The existing **Layers → Type → Default / Traffic** selection controls traffic overlay visibility; **Layers → Light** controls day and night when using manual map lighting.
+* Added the reversible `tidy\_here\_maps.py` for installations with extra HERE Vector Colour/Queues provider entries.
+* No changes to the driving-tested magenta route, GPS position marker, traffic-aware HERE routing or night palette.
 
-### Installation
+### New installation
 
-See [README.md](README.md) for installing `install.py` (no root) and optional `navigation\_patch.py` (requires `devel-su`). Existing users with the completed experimental setup need not reinstall.
+Copy `install.py` to your Sailfish OS Downloads folder and run:
 
-### Important notes
+```sh
+python3 \~/Downloads/install.py
+```
 
-Requires a valid HERE service key in Pure Maps and appropriate HERE entitlements. The generated maps contain authenticated HERE URLs. The consolidated v1.2 installers are compatibility-checked but have not been tested on a fresh phone; the individual changes were tested on the project author's Jolla.
+See [README.md](README.md) for the optional navigation QML patch and settings.
 
-Unofficial community project, not an official HERE or Pure Maps release.
+### Already using v1.2?
+
+You do **not** need to reinstall your working maps. If Settings → Maps still shows extra custom HERE Vector Colour or Queues providers, run the cleanup script with Pure Maps closed:
+
+```sh
+python3 \~/Downloads/tidy\_here\_maps.py
+```
+
+To restore those archived entries:
+
+```sh
+python3 \~/Downloads/tidy\_here\_maps.py --restore
+```
+
+This is an unofficial community project. The consolidated fresh-install script has not yet been tested on a new device; the v1.2 features were tested on the author's Jolla.
 

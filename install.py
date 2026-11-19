@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HERE Vector for Pure Maps, community release v1.2.
+"""HERE Vector for Pure Maps, community release v1.2.1.
 
 Installs self-contained day/night MapLibre map styles with optional HERE live
 traffic raster overlays. Runs on the Jolla/Sailfish device, reuses the HERE API
@@ -84,10 +84,8 @@ NIGHT = {
     'road-highway': ('line-color', '#4D9CE3'),
 }
 OPTIONS = [
-    # Filename slug, visible provider, HERE congestion filter level.
-    ('colour', 'HERE Vector Colour', None),
+    # Only one provider is needed; Layers controls day/night and traffic.
     ('traffic', 'HERE Vector Traffic', 'free'),
-    ('queues', 'HERE Vector Queues', 'queuing'),
 ]
 
 
@@ -237,7 +235,7 @@ def main():
         raise RuntimeError('HERE key contains unexpected characters')
     print('Using', source, '(key is not shown).')
     request_url = BASE_URL + '?apikey=' + key
-    req = Request(request_url, headers={'User-Agent': 'PureMaps-HERE-Vector/1.2'})
+    req = Request(request_url, headers={'User-Agent': 'PureMaps-HERE-Vector/1.2.1'})
     with urlopen(req, timeout=35) as response:
         base = json.load(response)
         final_url = response.geturl()
@@ -273,7 +271,7 @@ def main():
                 outputs.append((f'here_v12_{slug}_{light}.json', item))
     collisions = [name for name, _ in outputs if (MAPS / name).exists()]
     if collisions:
-        print('v1.2 styles already exist; refusing to overwrite:', ', '.join(collisions))
+        print('HERE Vector Traffic styles already exist; refusing to overwrite:', ', '.join(collisions))
         print('Existing maps and keys unchanged.')
         return
     created = []
@@ -294,7 +292,7 @@ def main():
         for dest in created:
             dest.unlink(missing_ok=True)
         raise
-    print('Installed', len(outputs), 'private v1.2 map definitions.')
+    print('Installed', len(outputs), 'private v1.2.1 map definitions.')
     print('Restart Pure Maps; select HERE profile and HERE Vector Traffic.')
     print('For manual traffic overlay control, disable Preferences > Maps > Switch map modes.')
     print('Layers > Type: Traffic = visible, Default = hidden.')
